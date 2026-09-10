@@ -860,19 +860,30 @@ document.getElementById('deleteStudent').addEventListener('click', async ()=>{
   showToast('已刪除');
 });
 
+// Builds the plain-text report: each name on its own line under a heading,
+// so it reads cleanly when pasted/sent to LINE.
+function formatReportText(dateLabel, byStatus){
+  const section = (label, arr)=>{
+    if(arr.length === 0) return `${label}：無\n`;
+    return `${label}（${arr.length}）：\n` + arr.map(n=>'・'+n).join('\n') + '\n';
+  };
+  let text = `點名紀錄 ${dateLabel}\n\n`;
+  text += section('已到', byStatus.present) + '\n';
+  text += section('請假', byStatus.leave) + '\n';
+  text += section('未到', byStatus.absent) + '\n';
+  text += section('家長接', byStatus.parent) + '\n';
+  if(byStatus.idle.length) text += section('尚未點名', byStatus.idle);
+  return text;
+}
+
 // --- share / copy today's list ---
 document.getElementById('btnShare').addEventListener('click', ()=>{
-  let text = `點名紀錄 ${currentDate}\n`;
   const byStatus = {present:[], leave:[], absent:[], parent:[], idle:[]};
   roster.forEach(s=>{
     const st = attendance[s.id] || 'idle';
     byStatus[st].push(s.name);
   });
-  text += `已到（${byStatus.present.length}）：${byStatus.present.join('、')||'無'}\n`;
-  text += `請假（${byStatus.leave.length}）：${byStatus.leave.join('、')||'無'}\n`;
-  text += `未到（${byStatus.absent.length}）：${byStatus.absent.join('、')||'無'}\n`;
-  text += `家長接（${byStatus.parent.length}）：${byStatus.parent.join('、')||'無'}\n`;
-  if(byStatus.idle.length) text += `尚未點名（${byStatus.idle.length}）：${byStatus.idle.join('、')}\n`;
+  const text = formatReportText(currentDate, byStatus);
 
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(()=>showToast('已複製到剪貼簿')).catch(()=>fallbackCopy(text));
@@ -976,12 +987,7 @@ async function renderDailyReport(){
   body.innerHTML = html;
 
   // plain-text version for copying / sending to LINE
-  currentReportText = `點名紀錄 ${histDate}（週${weekday}）\n`
-    + `已到（${groupsBy.present.length}）：${groupsBy.present.join('、')||'無'}\n`
-    + `請假（${groupsBy.leave.length}）：${groupsBy.leave.join('、')||'無'}\n`
-    + `未到（${groupsBy.absent.length}）：${groupsBy.absent.join('、')||'無'}\n`
-    + `家長接（${groupsBy.parent.length}）：${groupsBy.parent.join('、')||'無'}\n`
-    + (groupsBy.idle.length ? `尚未點名（${groupsBy.idle.length}）：${groupsBy.idle.join('、')}\n` : '');
+  currentReportText = formatReportText(`${histDate}（週${weekday}）`, groupsBy);
 }
 
 document.getElementById('shareLine').addEventListener('click', ()=>{
