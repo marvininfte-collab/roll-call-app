@@ -6,14 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="點名系統">
+<meta name="apple-mobile-web-app-title" content="鎮北國小點名系統">
 <meta name="theme-color" content="#F3F6F5">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231F6F5C'/%3E%3Ctext x='50' y='64' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'%3E✓%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231F6F5C'/%3E%3Ctext x='50' y='64' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'%3E✓%3C/text%3E%3C/svg%3E">
-<!-- Only takes effect once this file is hosted over https (e.g. GitHub Pages) —
-     harmless no-op when opened as a local file. -->
-<link rel="manifest" href="manifest.json">
-<title>點名系統</title>
+<title>鎮北國小點名系統</title>
 <style>
   :root{
     --bg:#F3F6F5;
@@ -27,6 +24,8 @@
     --leave-bg:#FBF0DC;
     --absent:#D64545;
     --absent-bg:#FBE6E6;
+    --parent:#2E6FB8;
+    --parent-bg:#E4ECF7;
     --idle-bg:#EEF1F0;
     --accent:#1F6F5C;
   }
@@ -54,6 +53,7 @@
   .chip.present b{color:var(--present);}
   .chip.leave b{color:var(--leave);}
   .chip.absent b{color:var(--absent);}
+  .chip.parent b{color:var(--parent);}
 
   .filters{padding:10px 16px 0; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;}
   .filters::-webkit-scrollbar{display:none;}
@@ -75,6 +75,8 @@
   .empty button{margin-top:14px;}
 
   .card{background:var(--card); border-radius:14px; padding:12px; margin-bottom:10px; display:flex; align-items:center; gap:10px; border:1px solid var(--line);}
+  .list-subhead{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:14px 2px 8px; padding-top:6px; border-top:1px solid var(--line);}
+  .list-subhead:first-child{margin-top:0; padding-top:0; border-top:none;}
   .card .info{flex:1; min-width:0;}
   .card .name{font-size:16px; font-weight:600; display:flex; align-items:center; gap:6px;}
   .tag{font-size:11px; color:var(--accent); background:#E4F0EC; padding:2px 7px; border-radius:6px; font-weight:600;}
@@ -85,6 +87,7 @@
   .status-btn.present{background:var(--present-bg); color:var(--present);}
   .status-btn.leave{background:var(--leave-bg); color:var(--leave);}
   .status-btn.absent{background:var(--absent-bg); color:var(--absent);}
+  .status-btn.parent{background:var(--parent-bg); color:var(--parent);}
   .edit-btn{flex:0 0 auto; width:32px; height:32px; border:none; background:transparent; color:var(--ink-soft); font-size:16px;}
 
   .fab-bar{position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--line); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:10px; z-index:20;}
@@ -129,6 +132,7 @@
   .hist-mark.present{background:var(--present-bg); color:var(--present);}
   .hist-mark.leave{background:var(--leave-bg); color:var(--leave);}
   .hist-mark.absent{background:var(--absent-bg); color:var(--absent);}
+  .hist-mark.parent{background:var(--parent-bg); color:var(--parent);}
   .toast{position:fixed; bottom:96px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:9px 10px 9px 16px; border-radius:999px; font-size:13px; z-index:60; opacity:0; transition:opacity .25s; display:flex; align-items:center; gap:10px; max-width:88vw; white-space:nowrap;}
   .toast.show{opacity:1;}
   .toast #toastMsg{overflow:hidden; text-overflow:ellipsis;}
@@ -139,7 +143,7 @@
 
 <header>
   <div class="title-row">
-    <h1>點名系統</h1>
+    <h1>鎮北國小點名系統</h1>
     <div style="display:flex; gap:8px;">
       <button class="icon-btn" id="btnHistory" type="button">📅</button>
       <button class="icon-btn" id="btnGroups" type="button">☰</button>
@@ -151,12 +155,14 @@
     <button class="date-nav" id="nextDay" type="button">›</button>
     <button class="date-nav" id="todayBtn" style="width:auto; padding:0 10px; font-size:12.5px;" type="button">今天</button>
   </div>
-  <div class="summary">
+  <div class="summary" id="summaryRow">
     <div class="chip"><b class="tabular" id="cntTotal">0</b><span>總人數</span></div>
     <div class="chip present"><b class="tabular" id="cntPresent">0</b><span>已到</span></div>
     <div class="chip leave"><b class="tabular" id="cntLeave">0</b><span>請假</span></div>
     <div class="chip absent"><b class="tabular" id="cntAbsent">0</b><span>未到</span></div>
+    <div class="chip parent"><b class="tabular" id="cntParent">0</b><span>家長接</span></div>
   </div>
+  <div class="sub" id="summaryHint" style="display:none; text-align:center; margin-top:4px;"></div>
 </header>
 
 <div class="filters" id="modeRow" style="padding:10px 16px 0;">
@@ -271,8 +277,8 @@
 // is generic and shouldn't need editing.
 // ============================================================================
 const CONFIG = {
-  appTitle: '點名系統',           // shown in the header and as the home-screen name
-  schoolId: 'template',  // change this per school/teacher deployment    // unique per school — keeps each school's saved
+  appTitle: '鎮北國小點名系統',   // shown in the header and as the home-screen name
+  schoolId: 'zhenbei-guobei',    // unique per school — keeps each school's saved
                                   // data separate even if opened in the same browser
 };
 // Remember to also update <title> and the apple-mobile-web-app-title <meta> tag
@@ -319,8 +325,18 @@ const Store = (function(){
   };
 })();
 
-const STATUS_CYCLE = ['idle','present','leave','absent'];
-const STATUS_LABEL = {idle:'未點', present:'已到', leave:'請假', absent:'未到'};
+const STATUS_CYCLE = ['idle','present','leave','absent','parent'];
+const STATUS_LABEL = {idle:'未點', present:'已到', leave:'請假', absent:'未到', parent:'家長接'};
+
+const WEEKDAYS = ['一','二','三','四','五'];
+// Reads the free-text "day" field (e.g. '二五', '三五', '一四', '每天') and
+// returns which weekdays it covers, so a student can show up under every
+// individual weekday tab that applies to them.
+function parseDays(dayStr){
+  if(!dayStr) return [];
+  if(dayStr.includes('每天')) return WEEKDAYS.slice();
+  return WEEKDAYS.filter(w => dayStr.includes(w));
+}
 
 let roster = [];
 let attendance = {};
@@ -343,14 +359,57 @@ let editingId = null;
 // Class-code corrections (old name -> new name) so already-saved students
 // get renamed in place instead of duplicated when SEED_DATA is updated.
 const RENAME_MAP = {
-  // e.g. '舊名字（舊班別）': '新名字（新班別）',
+  '吳柏叡（3班）': '吳柏叡（3-2班）',
+  '陳妡茹（3班）': '陳妡茹（3-4班）',
+  '李語棠（3班）': '李語棠（3-1班）',
+  '楊黃任霆（3班）': '楊黃任霆（3-4班）',
+  '趙翌程（3班）': '趙翌程（3-4班）',
+  '黃竑儒（3班）': '黃竑儒（3-1班）',
+  '吳羽軒（3班）': '吳羽軒（3-2班）',
+  '孫昱璇（5班）': '孫昱璇（5-4班）',
+  '謝喬伊（5班）': '謝喬伊（5-5班）',
+  '石鉉安（5班）': '石鉉安（5-5班）',
+  '曾馨蒂（5班）': '曾馨蒂（5-2班）',
 };
 
 const SEED_DATA = [
-  // 新學校版本：從空白開始，老師自己用「新增學生」或「整批匯入」建立名單即可。
-  // 也可以先貼上完整名單當作範例：
-  // {name:'王小明（1-1班）', group:'1年級', phone:'0912-345678', day:'每天', note:''},
+  // -- 深色（老師親自接送）--
+  {name:'吳柏叡（3-2班）', group:'3年級', phone:'0938-177113', note:'親自接送・二五', day:'二五'},
+  {name:'陳妡茹（3-4班）', group:'3年級', phone:'0925-515365', note:'親自接送・三五', day:'三五'},
+  {name:'李語棠（3-1班）', group:'3年級', phone:'0910-560446', note:'親自接送・三五', day:'三五'},
+  {name:'陳柏彥（4-班）', group:'4年級', phone:'0925-515365', note:'親自接送・五', day:'五'},
+  {name:'簡梓秦（6班）', group:'6年級', phone:'0910-778169', note:'親自接送・五', day:'五'},
+  {name:'林永宸（5-1班）', group:'5年級', phone:'0929-642306', note:'親自接送・一四', day:'一四'},
+  {name:'吳杞祺（2-2班）', group:'2年級', phone:'0919-897930', note:'親自接送・二五', day:'二五'},
+  {name:'林沐橙（2-3班）', group:'2年級', phone:'0963-098851', note:'親自接送・二五 4:00', day:'二五'},
+  {name:'陳柏宇（2-5班）', group:'2年級', phone:'0925-515365', note:'親自接送・二五', day:'二五'},
+  {name:'谷明臻（2-班）', group:'2年級', phone:'0968-774363', note:'親自接送・二五', day:'二五'},
+  // -- 白色（佳音接駁）--
+  {name:'孫昱璇（5-4班）', group:'5年級', phone:'0963-120072', day:'每天', note:'佳音・文中'},
+  {name:'謝喬伊（5-5班）', group:'5年級', phone:'0986-890861', day:'每天', note:'佳音・文中'},
+  {name:'石鉉安（5-5班）', group:'5年級', phone:'0919-789722', day:'每天', note:'佳音・美小'},
+  {name:'曾馨蒂（5-2班）', group:'5年級', phone:'0932-866280', day:'每天', note:'佳音・文中'},
+  {name:'吳苡瑄（6-5班）', group:'6年級', phone:'0928-430670', day:'每天', note:'佳音・文中'},
+  {name:'馮翊程（1-1班）', group:'1年級', phone:'0976-340271', day:'每天', note:'佳音・美小'},
+  {name:'陳琮恩（1-2班）', group:'1年級', phone:'0912-168232', day:'每天', note:'佳音・文中'},
+  {name:'吳羽洸（1-2班）', group:'1年級', phone:'0965-820996', day:'每天', note:'佳音・文中'},
+  {name:'郭侑甯（1-2班）', group:'1年級', phone:'0912-983375', day:'每天', note:'佳音・美小'},
+  {name:'李晟瑞（1-3班）', group:'1年級', phone:'0910-560446', day:'每天', note:'佳音・美小'},
+  {name:'黃鈞浩（1-3班）', group:'1年級', phone:'0989-577859', day:'每天', note:'佳音・文中'},
+  {name:'張瑀恬（2-1班）', group:'2年級', phone:'0956-550641', day:'每天', note:'佳音・文中'},
+  {name:'石竣鎧（2-2班）', group:'2年級', phone:'0919-789722', day:'每天', note:'佳音・美小'},
+  {name:'趙宥寧（2-2班）', group:'2年級', phone:'0930-625392', day:'每天', note:'佳音・美小'},
+  {name:'魏柏昀（2-2班）', group:'2年級', phone:'0952-680888', day:'每天', note:'佳音・二X'},
+  {name:'楊黃任霆（3-4班）', group:'3年級', phone:'0962-072272', day:'每天', note:'佳音・文中'},
+  {name:'趙翌程（3-4班）', group:'3年級', phone:'0930-625392', day:'每天', note:'佳音・美小'},
+  {name:'黃竑儒（3-1班）', group:'3年級', phone:'0929-730603', day:'每天', note:'佳音・文中'},
+  {name:'楊博宇（3-1班）', group:'3年級', phone:'0989-291351', day:'每天', note:'佳音・克拉克'},
+  {name:'吳羽軒（3-2班）', group:'3年級', phone:'0965-820996', day:'每天', note:'佳音・文中'},
+  {name:'高翊凱（4-1班）', group:'4年級', phone:'0985-362910', day:'每天', note:'佳音・文中'},
+  {name:'郭睿恩（4-1班）', group:'4年級', phone:'0918-229715', day:'每天', note:'佳音・文中'},
+  {name:'吳羽霆（4-3班）', group:'4年級', phone:'0928-430670', day:'每天', note:'佳音・文中'},
 ];
+// ============================================================================
 // END SCHOOL-SPECIFIC DATA — everything below this line is generic app logic.
 // ============================================================================
 
@@ -424,31 +483,21 @@ async function saveAttendance(date){
   attSaveInFlight = false;
 }
 
-const DAY_ORDER = ['每天', '一四', '二五', '三五', '五'];
-
 function groups(){
-  const field = currentFilterMode === 'day' ? 'day' : 'group';
-  const set = new Set(roster.map(s=>s[field]).filter(Boolean));
-  const arr = Array.from(set);
-  if(currentFilterMode === 'group'){
-    // sort grade-like labels (1年級..6年級) numerically; anything else falls to the end
-    arr.sort((a,b)=>{
-      const na = parseInt(a), nb = parseInt(b);
-      const va = isNaN(na) ? 999 : na;
-      const vb = isNaN(nb) ? 999 : nb;
-      if(va !== vb) return va - vb;
-      return a.localeCompare(b, 'zh-Hant');
-    });
-  } else {
-    // fixed order: 每天, 一四, 二五, 三五, 五 — anything else falls to the end
-    arr.sort((a,b)=>{
-      const ia = DAY_ORDER.indexOf(a), ib = DAY_ORDER.indexOf(b);
-      const va = ia === -1 ? 999 : ia;
-      const vb = ib === -1 ? 999 : ib;
-      if(va !== vb) return va - vb;
-      return a.localeCompare(b, 'zh-Hant');
-    });
+  if(currentFilterMode === 'day'){
+    // fixed set: 週一..週五 — always shown, regardless of who's in the roster
+    return WEEKDAYS.slice();
   }
+  const set = new Set(roster.map(s=>s.group).filter(Boolean));
+  const arr = Array.from(set);
+  // sort grade-like labels (1年級..6年級) numerically; anything else falls to the end
+  arr.sort((a,b)=>{
+    const na = parseInt(a), nb = parseInt(b);
+    const va = isNaN(na) ? 999 : na;
+    const vb = isNaN(nb) ? 999 : nb;
+    if(va !== vb) return va - vb;
+    return a.localeCompare(b, 'zh-Hant');
+  });
   return arr;
 }
 
@@ -457,11 +506,12 @@ function renderFilters(){
   const gs = groups();
   let html = `<div class="filter-chip ${currentFilter==='all'?'active':''}" data-g="all">全部</div>`;
   gs.forEach(g=>{
-    html += `<div class="filter-chip ${currentFilter===g?'active':''}" data-g="${escapeHtml(g)}">${escapeHtml(g)}</div>`;
+    const label = currentFilterMode === 'day' ? ('週'+g) : g;
+    html += `<div class="filter-chip ${currentFilter===g?'active':''}" data-g="${escapeHtml(g)}">${escapeHtml(label)}</div>`;
   });
   row.innerHTML = html;
   row.querySelectorAll('.filter-chip').forEach(el=>{
-    el.addEventListener('click', ()=>{ currentFilter = el.dataset.g; renderFilters(); renderList(); });
+    el.addEventListener('click', ()=>{ currentFilter = el.dataset.g; renderFilters(); renderList(); renderSummary(); });
   });
 }
 
@@ -470,29 +520,99 @@ function escapeHtml(s){
 }
 
 function renderSummary(){
-  const total = roster.length;
-  let present=0, leave=0, absent=0;
-  roster.forEach(s=>{
+  const items = getVisibleItems();
+  let present=0, leave=0, absent=0, parent=0;
+  items.forEach(s=>{
     const st = attendance[s.id] || 'idle';
     if(st==='present') present++;
     else if(st==='leave') leave++;
     else if(st==='absent') absent++;
+    else if(st==='parent') parent++;
   });
-  document.getElementById('cntTotal').textContent = total;
+  document.getElementById('cntTotal').textContent = items.length;
   document.getElementById('cntPresent').textContent = present;
   document.getElementById('cntLeave').textContent = leave;
   document.getElementById('cntAbsent').textContent = absent;
+  document.getElementById('cntParent').textContent = parent;
+
+  const hint = document.getElementById('summaryHint');
+  if(currentFilterMode === 'day' && currentFilter !== 'all'){
+    hint.style.display = 'block';
+    if(SPLIT_DAYS[currentFilter] !== undefined){
+      const am = items.filter(s => timeSlotForDay(s, currentFilter) === 'am').length;
+      const pm = items.filter(s => timeSlotForDay(s, currentFilter) === 'pm').length;
+      hint.textContent = `週${currentFilter}共 ${items.length} 位（上午 ${am} 位、下午 ${pm} 位），其中 ${parent} 位家長接送 — 以上數字僅計入目前篩選範圍`;
+    } else {
+      hint.textContent = `週${currentFilter}共 ${items.length} 位，其中 ${parent} 位家長接送 — 以上數字僅計入目前篩選範圍`;
+    }
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+// Pulls the class number out of a name like "陳栢彥（4-2班）" → 2.
+// Names without a dash (e.g. "簡梓秦（6班）") have no specific class, so
+// they sort first within their grade.
+function classSortKey(name){
+  const m = (name||'').match(/（\d+-?(\d*)班）/);
+  if(!m || !m[1]) return 0;
+  return parseInt(m[1]) || 0;
 }
 
 function getVisibleItems(){
   const q = document.getElementById('searchInput').value.trim();
   let items = roster.slice();
   if(currentFilter !== 'all'){
-    const field = currentFilterMode === 'day' ? 'day' : 'group';
-    items = items.filter(s=>s[field]===currentFilter);
+    if(currentFilterMode === 'day'){
+      items = items.filter(s => parseDays(s.day).includes(currentFilter));
+    } else {
+      items = items.filter(s => s.group === currentFilter);
+    }
   }
   if(q) items = items.filter(s=>s.name.includes(q));
+
+  // sort by grade, then class, then name — so the list always reads top to
+  // bottom the way a school roster would, regardless of which filter is active
+  items.sort((a,b)=>{
+    const ga = parseInt(a.group) || 999, gb = parseInt(b.group) || 999;
+    if(ga !== gb) return ga - gb;
+    const ca = classSortKey(a.name), cb = classSortKey(b.name);
+    if(ca !== cb) return ca - cb;
+    return a.name.localeCompare(b.name, 'zh-Hant');
+  });
+
   return items;
+}
+
+// Some weekdays are split into a morning and an afternoon pickup shift,
+// with the cutoff grade depending on the day:
+//   週五 (Fri) — grade 5+ is afternoon
+//   週一 / 週四 (Mon/Thu) — grade 3+ is afternoon
+// A note/day explicitly containing "4:00" always forces afternoon, on any
+// split day, regardless of grade.
+const SPLIT_DAYS = { '五': 5, '一': 3, '四': 3 };
+function timeSlotForDay(s, dayChar){
+  const cutoff = SPLIT_DAYS[dayChar];
+  if(cutoff === undefined) return 'am'; // this weekday isn't split
+  const grade = parseInt(s.group) || 0;
+  if(grade >= cutoff) return 'pm';
+  if((s.note||'').includes('4:00') || (s.day||'').includes('4:00')) return 'pm';
+  return 'am';
+}
+
+function cardHtml(s){
+  const st = attendance[s.id] || 'idle';
+  return `<div class="card" data-id="${s.id}">
+      <div class="info">
+        <div class="name">${escapeHtml(s.name)} ${s.group?`<span class="tag">${escapeHtml(s.group)}</span>`:''}</div>
+        <div class="meta">
+          ${s.phone?`<a class="call" href="tel:${escapeHtml(s.phone.replace(/-/g,''))}">📞 ${escapeHtml(s.phone)}</a>`:'<span>未填電話</span>'}
+          ${s.note?`<span>・${escapeHtml(s.note)}</span>`:''}
+        </div>
+      </div>
+      <button class="edit-btn" data-edit="${s.id}" type="button">✎</button>
+      <button class="status-btn ${st}" data-toggle="${s.id}" type="button">${STATUS_LABEL[st]}</button>
+    </div>`;
 }
 
 function renderList(){
@@ -508,20 +628,19 @@ function renderList(){
     return;
   }
 
-  list.innerHTML = items.map(s=>{
-    const st = attendance[s.id] || 'idle';
-    return `<div class="card" data-id="${s.id}">
-      <div class="info">
-        <div class="name">${escapeHtml(s.name)} ${s.group?`<span class="tag">${escapeHtml(s.group)}</span>`:''}</div>
-        <div class="meta">
-          ${s.phone?`<a class="call" href="tel:${escapeHtml(s.phone.replace(/-/g,''))}">📞 ${escapeHtml(s.phone)}</a>`:'<span>未填電話</span>'}
-          ${s.note?`<span>・${escapeHtml(s.note)}</span>`:''}
-        </div>
-      </div>
-      <button class="edit-btn" data-edit="${s.id}" type="button">✎</button>
-      <button class="status-btn ${st}" data-toggle="${s.id}" type="button">${STATUS_LABEL[st]}</button>
-    </div>`;
-  }).join('');
+  const isSplitDay = currentFilterMode === 'day' && SPLIT_DAYS[currentFilter] !== undefined;
+  if(isSplitDay){
+    const cutoff = SPLIT_DAYS[currentFilter];
+    const am = items.filter(s => timeSlotForDay(s, currentFilter) === 'am');
+    const pm = items.filter(s => timeSlotForDay(s, currentFilter) === 'pm');
+    const sub = (label, arr)=> arr.length
+      ? `<div class="list-subhead">${label}（${arr.length}）</div>${arr.map(cardHtml).join('')}`
+      : '';
+    list.innerHTML = sub(`週${currentFilter}上午接`, am)
+      + sub(`週${currentFilter}下午接（${cutoff}年級以上固定下午；其他有標註 4:00 的也算下午）`, pm);
+  } else {
+    list.innerHTML = items.map(cardHtml).join('');
+  }
 
   list.querySelectorAll('[data-toggle]').forEach(btn=>{
     let pressTimer = null;
@@ -608,15 +727,16 @@ document.getElementById('todayBtn').addEventListener('click', async ()=>{
   currentDate = todayStr();
   await refreshAll();
 });
-document.getElementById('searchInput').addEventListener('input', renderList);
+document.getElementById('searchInput').addEventListener('input', ()=>{ renderList(); renderSummary(); });
 
 // --- bulk actions (respect the current filter + search) ---
 document.getElementById('btnMarkAllPresent').addEventListener('click', ()=>{
   const items = getVisibleItems();
   if(items.length === 0){ showToast('目前沒有符合的學生'); return; }
-  // skip anyone already marked 請假 — bulk "mark present" shouldn't touch that
-  const toChange = items.filter(s => (attendance[s.id] || 'idle') !== 'leave');
-  if(toChange.length === 0){ showToast('目前都是請假中，沒有可標記的學生'); return; }
+  // skip anyone already marked 請假 or 家長接 — bulk "mark present" shouldn't touch those
+  const PROTECTED = ['leave', 'parent'];
+  const toChange = items.filter(s => !PROTECTED.includes(attendance[s.id] || 'idle'));
+  if(toChange.length === 0){ showToast('目前都是請假／家長接中，沒有可標記的學生'); return; }
   const prevSnapshot = {};
   toChange.forEach(s=>{ prevSnapshot[s.id] = attendance[s.id] || 'idle'; });
   toChange.forEach(s=>{ attendance[s.id] = 'present'; });
@@ -626,7 +746,7 @@ document.getElementById('btnMarkAllPresent').addEventListener('click', ()=>{
   if(navigator.vibrate) navigator.vibrate(10);
   const skipped = items.length - toChange.length;
   const msg = skipped > 0
-    ? `已將 ${toChange.length} 位標記為已到（${skipped} 位請假中未變動）`
+    ? `已將 ${toChange.length} 位標記為已到（${skipped} 位請假／家長接未變動）`
     : `已將 ${toChange.length} 位標記為已到`;
   showUndoToast(msg, '復原', ()=>{
     toChange.forEach(s=>{ attendance[s.id] = prevSnapshot[s.id]; });
@@ -656,14 +776,14 @@ document.getElementById('modeGroup').addEventListener('click', ()=>{
   currentFilter = 'all';
   document.getElementById('modeGroup').classList.add('active');
   document.getElementById('modeDay').classList.remove('active');
-  renderFilters(); renderList();
+  renderFilters(); renderList(); renderSummary();
 });
 document.getElementById('modeDay').addEventListener('click', ()=>{
   currentFilterMode = 'day';
   currentFilter = 'all';
   document.getElementById('modeDay').classList.add('active');
   document.getElementById('modeGroup').classList.remove('active');
-  renderFilters(); renderList();
+  renderFilters(); renderList(); renderSummary();
 });
 
 // --- add sheet ---
@@ -743,7 +863,7 @@ document.getElementById('deleteStudent').addEventListener('click', async ()=>{
 // --- share / copy today's list ---
 document.getElementById('btnShare').addEventListener('click', ()=>{
   let text = `點名紀錄 ${currentDate}\n`;
-  const byStatus = {present:[], leave:[], absent:[], idle:[]};
+  const byStatus = {present:[], leave:[], absent:[], parent:[], idle:[]};
   roster.forEach(s=>{
     const st = attendance[s.id] || 'idle';
     byStatus[st].push(s.name);
@@ -751,6 +871,7 @@ document.getElementById('btnShare').addEventListener('click', ()=>{
   text += `已到（${byStatus.present.length}）：${byStatus.present.join('、')||'無'}\n`;
   text += `請假（${byStatus.leave.length}）：${byStatus.leave.join('、')||'無'}\n`;
   text += `未到（${byStatus.absent.length}）：${byStatus.absent.join('、')||'無'}\n`;
+  text += `家長接（${byStatus.parent.length}）：${byStatus.parent.join('、')||'無'}\n`;
   if(byStatus.idle.length) text += `尚未點名（${byStatus.idle.length}）：${byStatus.idle.join('、')}\n`;
 
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -823,7 +944,7 @@ async function renderDailyReport(){
     rec = r ? JSON.parse(r.value) : {};
   }catch(e){ rec = {}; }
 
-  const groupsBy = {present:[], leave:[], absent:[], idle:[]};
+  const groupsBy = {present:[], leave:[], absent:[], parent:[], idle:[]};
   roster.forEach(s=>{
     const st = rec[s.id] || 'idle';
     groupsBy[st].push(s.name);
@@ -836,6 +957,7 @@ async function renderDailyReport(){
     <div class="rchip" style="color:var(--present)"><b>${groupsBy.present.length}</b>已到</div>
     <div class="rchip" style="color:var(--leave)"><b>${groupsBy.leave.length}</b>請假</div>
     <div class="rchip" style="color:var(--absent)"><b>${groupsBy.absent.length}</b>未到</div>
+    <div class="rchip" style="color:var(--parent)"><b>${groupsBy.parent.length}</b>家長接</div>
   </div>`;
 
   const section = (label, color, list)=>{
@@ -848,6 +970,7 @@ async function renderDailyReport(){
   html += section('已到', 'var(--present)', groupsBy.present);
   html += section('請假', 'var(--leave)', groupsBy.leave);
   html += section('未到', 'var(--absent)', groupsBy.absent);
+  html += section('家長接', 'var(--parent)', groupsBy.parent);
   if(groupsBy.idle.length) html += section('尚未點名', 'var(--ink-soft)', groupsBy.idle);
 
   body.innerHTML = html;
@@ -857,6 +980,7 @@ async function renderDailyReport(){
     + `已到（${groupsBy.present.length}）：${groupsBy.present.join('、')||'無'}\n`
     + `請假（${groupsBy.leave.length}）：${groupsBy.leave.join('、')||'無'}\n`
     + `未到（${groupsBy.absent.length}）：${groupsBy.absent.join('、')||'無'}\n`
+    + `家長接（${groupsBy.parent.length}）：${groupsBy.parent.join('、')||'無'}\n`
     + (groupsBy.idle.length ? `尚未點名（${groupsBy.idle.length}）：${groupsBy.idle.join('、')}\n` : '');
 }
 
@@ -885,7 +1009,7 @@ async function renderGridHistory(){
         records[d] = r ? JSON.parse(r.value) : {};
       }catch(e){ records[d] = {}; }
     }
-    const MARK = {present:'到', leave:'假', absent:'X'};
+    const MARK = {present:'到', leave:'假', absent:'X', parent:'接'};
     let html = '<table class="hist-table"><thead><tr><th class="hist-name">姓名</th>';
     dates.forEach(d=>{ html += `<th>${d.slice(5).replace('-','/')}</th>`; });
     html += '</tr></thead><tbody>';
@@ -915,15 +1039,6 @@ document.addEventListener('visibilitychange', ()=>{
 window.addEventListener('pagehide', ()=>{
   saveAttendance(currentDate);
 });
-
-// Register the service worker for offline installability — only works when
-// this page is actually hosted over http/https (e.g. GitHub Pages). Silently
-// does nothing when opened as a local file:// page.
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
-  });
-}
 
 // --- init ---
 (async function init(){
