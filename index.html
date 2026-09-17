@@ -247,20 +247,11 @@
     </div>
 
     <div class="field">
-      <label>主畫面圖示（如果有兩份不同名單，可以設不同顏色/文字方便分辨）</label>
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-        <div id="iconPreview" style="width:48px; height:48px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:700; flex:0 0 auto;"></div>
-        <div style="flex:1; display:flex; gap:8px;">
-          <input type="color" id="iconColorInput" style="width:48px; height:40px; padding:2px; border:1px solid var(--line); border-radius:8px;">
-          <input type="text" id="iconGlyphInput" maxlength="2" placeholder="文字/emoji" style="flex:1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:15px;">
-        </div>
-      </div>
+      <label>主畫面圖示下方的名字（跟上面標題分開，建議短一點，手機才顯示得完整）</label>
+      <input type="text" id="homeNameInput" maxlength="12" placeholder="例如：大樹接送">
     </div>
     <div class="sheet-actions" style="margin-bottom:16px;">
-      <button class="btn-primary" id="saveIcon" type="button">儲存圖示</button>
-    </div>
-    <div class="hint" style="margin-bottom:16px;">
-      改完只會更新網頁本身的圖示；手機主畫面上「已經加好」的舊圖示不會自動變，要刪掉舊的、重新「加入主畫面」一次才會看到新圖示。改圖示不會動到名單或點名紀錄，資料都還在。
+      <button class="btn-primary" id="saveHomeName" type="button">儲存主畫面名稱</button>
     </div>
 
     <div class="sub" id="settingsSub">—</div>
@@ -329,12 +320,9 @@ const CONFIG = {
   appTitle: '佳音&大樹接送點名系統', // shown in the header and as the home-screen name
   schoolId: 'zhenbei-guobei',    // unique per school — keeps each school's saved
                                   // data separate even if opened in the same browser
-  iconColor: '1F6F5C',   // home-screen icon background color (hex, no #) —
-                          // change this per deployment so two lists look
-                          // different on your home screen at a glance
-  iconGlyph: '✓',         // 1–2 characters shown on the icon, e.g. '大' or '北'
-                          // or an emoji — whatever helps you tell lists apart
 };
+// To change the home-screen icon graphic itself, edit the <link rel="icon">
+// and <link rel="apple-touch-icon"> data-URIs near the top of the HTML.
 // Remember to also update <title> and the apple-mobile-web-app-title <meta> tag
 // near the top of the HTML — those two are static and can't be set from here.
 // ============================================================================
@@ -984,27 +972,12 @@ function applyTitle(schoolName){
   document.querySelector('header h1').textContent = full;
 }
 
-// Builds the home-screen / favicon icon from the given color + glyph, so two
-// lists installed side by side on the same phone look different. Falls back
-// to CONFIG.iconColor / CONFIG.iconGlyph when no override is given.
-function applyIcon(color, glyph){
-  const c = (color || CONFIG.iconColor).replace('#', '');
-  const g = glyph || CONFIG.iconGlyph;
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>`
-    + `<rect width='100' height='100' rx='22' fill='%23${c}'/>`
-    + `<text x='50' y='64' font-size='48' text-anchor='middle' fill='white' font-family='sans-serif'>${encodeURIComponent(g)}</text>`
-    + `</svg>`;
-  const dataUri = 'data:image/svg+xml,' + svg.replace(/#/g, '%23');
-  const icon = document.querySelector('link[rel="icon"]');
-  const touchIcon = document.querySelector('link[rel="apple-touch-icon"]');
-  if(icon) icon.href = dataUri;
-  if(touchIcon) touchIcon.href = dataUri;
-
-  const preview = document.getElementById('iconPreview');
-  if(preview){
-    preview.style.background = '#' + c;
-    preview.textContent = g;
-  }
+// Sets the name shown under the home-screen icon — separate from the header
+// title above, since the icon label is short and gets truncated on the phone.
+function applyHomeName(name){
+  const label = name || CONFIG.appTitle;
+  const meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if(meta) meta.setAttribute('content', label);
 }
 
 document.getElementById('btnGroups').addEventListener('click', async ()=>{
@@ -1016,37 +989,21 @@ document.getElementById('btnGroups').addEventListener('click', async ()=>{
   }catch(e){
     document.getElementById('schoolNameInput').value = '';
   }
-  let savedColor = CONFIG.iconColor, savedGlyph = CONFIG.iconGlyph;
   try{
-    const rc = await Store.get(K('iconColor'), false);
-    if(rc && rc.value) savedColor = rc.value;
-  }catch(e){}
-  try{
-    const rg = await Store.get(K('iconGlyph'), false);
-    if(rg && rg.value) savedGlyph = rg.value;
-  }catch(e){}
-  document.getElementById('iconColorInput').value = '#' + savedColor.replace('#','');
-  document.getElementById('iconGlyphInput').value = savedGlyph;
-  applyIcon(savedColor, savedGlyph);
+    const rh = await Store.get(K('homeName'), false);
+    document.getElementById('homeNameInput').value = (rh && rh.value) || '';
+  }catch(e){
+    document.getElementById('homeNameInput').value = '';
+  }
   settingsOverlay.classList.add('open');
 });
 
-// live preview as you type/pick, before saving
-document.getElementById('iconColorInput').addEventListener('input', (e)=>{
-  applyIcon(e.target.value, document.getElementById('iconGlyphInput').value);
-});
-document.getElementById('iconGlyphInput').addEventListener('input', (e)=>{
-  applyIcon(document.getElementById('iconColorInput').value, e.target.value);
-});
-
-document.getElementById('saveIcon').addEventListener('click', async ()=>{
-  const color = document.getElementById('iconColorInput').value.replace('#','');
-  const glyph = document.getElementById('iconGlyphInput').value.trim() || CONFIG.iconGlyph;
+document.getElementById('saveHomeName').addEventListener('click', async ()=>{
+  const name = document.getElementById('homeNameInput').value.trim();
   try{
-    await Store.set(K('iconColor'), color, false);
-    await Store.set(K('iconGlyph'), glyph, false);
-    applyIcon(color, glyph);
-    showToast('已儲存圖示，重新「加入主畫面」就會看到新圖示');
+    await Store.set(K('homeName'), name, false);
+    applyHomeName(name);
+    showToast('已儲存，重新「加入主畫面」才會看到新名字');
   }catch(e){
     showToast('儲存失敗，請重試');
   }
@@ -1268,16 +1225,12 @@ window.addEventListener('pagehide', ()=>{
   }catch(e){ savedSchoolName = ''; }
   applyTitle(savedSchoolName);
 
-  let savedIconColor = CONFIG.iconColor, savedIconGlyph = CONFIG.iconGlyph;
+  let savedHomeName = '';
   try{
-    const rc = await Store.get(K('iconColor'), false);
-    if(rc && rc.value) savedIconColor = rc.value;
-  }catch(e){}
-  try{
-    const rg = await Store.get(K('iconGlyph'), false);
-    if(rg && rg.value) savedIconGlyph = rg.value;
-  }catch(e){}
-  applyIcon(savedIconColor, savedIconGlyph);
+    const rh = await Store.get(K('homeName'), false);
+    savedHomeName = (rh && rh.value) || '';
+  }catch(e){ savedHomeName = ''; }
+  applyHomeName(savedHomeName);
 
   document.getElementById('dateInput').value = currentDate;
   await loadRoster();
